@@ -1,0 +1,5 @@
+---
+postgresql:
+  - user: vagrant
+    pass: vagrant
+    db: vagrant

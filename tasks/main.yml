@@ -1,0 +1,53 @@
+---
+- name: Provision
+  yum:
+    name: '{{ item }}'
+  with_items:
+  - postgresql
+  - postgresql-server
+  - python-psycopg2
+
+- name: Default Db is initialized
+  shell: service postgresql initdb
+         creates="/var/lib/pgsql/data/postgresql.conf"
+
+- name: Db server is running
+  service:
+    name: postgresql
+    state: started
+    enabled: yes
+
+- name: 'Db users created: {{ postgresql | join(", ", attribute="user") }}'
+  postgresql_user:
+    name: '{{ item.user }}'
+    password: '{{ item.pass }}' # priv="ALL"
+  with_items: '{{ postgresql }}'
+  become_user: postgres
+
+- name: 'Dbs created: {{ postgresql | join(", ", attribute="db") }}'
+  postgresql_db:
+    name: '{{ item.db }}'
+    owner: '{{ item.user }}'
+  with_items: '{{ postgresql }}'
+  become_user: postgres
+
+- name: 'Grant ALL to: {{ postgresql | join(", ", attribute="db") }} by users: {{ postgresql | join(", ", attribute="user") }}'
+  postgresql_privs:
+    database: '{{ item.db }}'
+    roles: '{{ item.user }}'
+    type: database
+    priv: ALL
+  with_items: '{{ postgresql }}'
+  become_user: postgres
+
+- name: 'Db accepts connect from users: {{ postgresql | join(", ", attribute="user") }}'
+  blockinfile:
+    dest: /var/lib/pgsql/data/pg_hba.conf
+    insertbefore: '^# "local"'
+    state: present
+    marker:  '# {mark} ANSIBLE MANAGED BLOCK FOR USER: {{ item.user }}'
+    block: | 
+      local all '{{ item.user }}' md5
+      host all '{{ item.user }}' 127.0.0.1/32 md5
+  with_items: '{{ postgresql }}'
+  notify: restart postgresql
