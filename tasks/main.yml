@@ -1,13 +1,9 @@
 ---
-- name: Provision
+- name: yum | Provision
   yum:
-    name: '{{ item }}'
-  with_items:
-  - postgresql
-  - postgresql-server
-  - python-psycopg2
+    name: postgresql, postgresql-server, python-psycopg2
 
-- name: Default Db is initialized
+- name: Default conf is initialized
   shell: service postgresql initdb
          creates="/var/lib/pgsql/data/postgresql.conf"
 
@@ -47,7 +43,7 @@
     state: present
     marker:  '# {mark} ANSIBLE MANAGED BLOCK FOR USER: {{ item.user }}'
     block: | 
-      local all '{{ item.user }}' md5
-      host all '{{ item.user }}' 127.0.0.1/32 md5
+      local all {{ item.user }} md5
+      host all {{ item.user }} 127.0.0.1/32 md5
   with_items: '{{ postgresql }}'
   notify: restart postgresql
