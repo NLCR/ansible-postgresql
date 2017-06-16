@@ -17,8 +17,11 @@ postgresql:
   - user: vagrant
     pass: vagrant
     db: vagrant
+# Optional variables, but template0 has to be defined if changing lc_collate or lc_type
+    lc_collate: cs_CZ.UTF-8
+    lc_ctype: cs_CZ.UTF-8
+    template: template0
 ```
-
 Dependencies
 ------------
 
@@ -29,9 +32,16 @@ Example Playbook
 
 Including an example of how to use your role (for instance, with variables passed in as parameters) is always nice for users too:
 
-    - hosts: servers
-      roles:
-         - { role: username.rolename, x: 42 }
+roles:
+  - role: NLCR.postgresql
+    postgresql:
+    - user: safe
+      pass: safe
+      db: safe
+      lc_collate: cs_CZ.UTF-8
+      lc_ctype: cs_CZ.UTF-8
+      template: template0
+
 
 License
 -------

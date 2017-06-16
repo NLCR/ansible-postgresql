@@ -24,6 +24,9 @@
   postgresql_db:
     name: '{{ item.db }}'
     owner: '{{ item.user }}'
+    lc_ctype: '{{ item.lc_ctype | default(omit) }}'
+    lc_collate: '{{ item.lc_collate | default(omit) }}'
+    template: '{{ item.template | default(omit) }}'
   with_items: '{{ postgresql }}'
   become_user: postgres
 
