@@ -19,6 +19,7 @@
     password: '{{ item.pass }}' # priv="ALL"
   with_items: '{{ postgresql }}'
   become_user: postgres
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: 'Dbs created: {{ postgresql | join(", ", attribute="db") }}'
   postgresql_db:
@@ -29,6 +30,7 @@
     template: '{{ item.template | default(omit) }}'
   with_items: '{{ postgresql }}'
   become_user: postgres
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: 'Grant ALL to: {{ postgresql | join(", ", attribute="db") }} by users: {{ postgresql | join(", ", attribute="user") }}'
   postgresql_privs:
@@ -38,6 +40,7 @@
     priv: ALL
   with_items: '{{ postgresql }}'
   become_user: postgres
+  ignore_errors: "{{ ansible_check_mode }}"
 
 - name: 'Db accepts connect from users: {{ postgresql | join(", ", attribute="user") }}'
   blockinfile:
@@ -45,8 +48,9 @@
     insertbefore: '^# "local"'
     state: present
     marker:  '# {mark} ANSIBLE MANAGED BLOCK FOR USER: {{ item.user }}'
-    block: | 
+    block: |
       local all {{ item.user }} md5
       host all {{ item.user }} 127.0.0.1/32 md5
   with_items: '{{ postgresql }}'
   notify: restart postgresql
+  ignore_errors: "{{ ansible_check_mode }}"
