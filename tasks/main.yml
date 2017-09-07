@@ -5,7 +5,8 @@
 
 - name: Default conf is initialized
   shell: service postgresql initdb
-         creates="/var/lib/pgsql/data/postgresql.conf"
+  args:
+    creates: /var/lib/pgsql/data/postgresql.conf
 
 - name: Db server is running
   service:
@@ -53,4 +54,27 @@
       host all {{ item.user }} 127.0.0.1/32 md5
   with_items: '{{ postgresql }}'
   notify: restart postgresql
+  ignore_errors: "{{ ansible_check_mode }}"
+
+- name: "Db listen on {{ ansible_nodename }}"
+  blockinfile:
+    dest: /var/lib/pgsql/data//postgresql.conf
+    insertafter: '^# - Connection Settings -'
+    state: present
+    marker:  '# {mark} ANSIBLE MANAGED BLOCK FOR {{ ansible_nodename }}'
+    block: |
+      listen_addresses = '{{ ansible_nodename }}'
+  notify: restart postgresql
+
+- name: 'Db accepts TCP/IP users'
+  blockinfile:
+    dest: /var/lib/pgsql/data/pg_hba.conf
+    insertafter: '^# IPv4'
+    state: present
+    marker:  '# {mark} ANSIBLE MANAGED BLOCK FOR CIDR: {{ item.allow_cidr }}'
+    block: |
+      host all all {{ item.allow_cidr }} trust
+  with_items: '{{ postgresql }}'
+  notify: restart postgresql
+  when: item.allow_cidr is defined
   ignore_errors: "{{ ansible_check_mode }}"
