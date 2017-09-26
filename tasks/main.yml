@@ -64,6 +64,7 @@
     marker:  '# {mark} ANSIBLE MANAGED BLOCK FOR {{ ansible_nodename }}'
     block: |
       listen_addresses = '{{ ansible_nodename }}'
+  ignore_errors: "{{ ansible_check_mode }}"
   notify: restart postgresql
 
 - name: 'Db accepts TCP/IP users'
